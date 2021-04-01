@@ -1,12 +1,28 @@
-Install-Module Selenium
+#Requires -Modules Selenium
+
+#Quick and Dirty script to notify on halfords restocking
+
+# Also needs the matching webdriver matching the google chrome version 
+# Download from https://chromedriver.storage.googleapis.com/index.html
+# Place here: C:\Program Files\WindowsPowerShell\Modules\Selenium\3.0.1\assemblies
+# More information on Selenium module can be found here
+# https://adamtheautomator.com/selenium-powershell/#Importing_the_Selenium_to_PowerShell
+if(-not (Get-Module Selenium)){
+    Install-Module Selenium
+}else{
+    write-host "Selenium Module installed"
+}
+
+import-Module Selenium
+
+
 #actual url
 $url='https://www.halfords.com/bikes/electric-bikes/voodoo-bizango-e-shimano-electric-mountain-bike---17in-19in-21in-frames-180982.html'
 #test url - testing in stock stuff
 #$url='https://www.halfords.com/bikes/electric-bikes/carrera-vengeance-e-mens-electric-mountain-bike-2.0---18in-20in-frames-446110.html'
-$interval = 60
+$interval_mins = 60
+
 $prowl_apikey="xxxxxxx"
-
-
 function Send-ProwlNotification {
     [CmdletBinding()]
     param(
@@ -135,9 +151,12 @@ do{
     $ChromeDriver.Navigate().GoToURL($url)
     $ChromeDriver.FindElementByXPath("//*[@id=""productInfoBlock""]/div[6]/div[1]/div[1]/div/div[1]/ul/li[1]/a/span").Click()
     $ChromeDriver.ExecuteScript("window.scrollTo(0, 1380)")
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 1
     $location=$ChromeDriver.FindElementByXPath("/html/body/div[1]/section[2]/div[3]/div[1]/div/div[2]/div[6]/div[3]/div/div/div[1]/form/div[1]/div/div[1]/div/div/input")
-    $location.SendKeys("Christchurch")
+    $location.SendKeys("SO41 0LH")
+ 
+
+
     $location.Submit()
     Start-Sleep -Seconds 2
     $inStock=$ChromeDriver.FindElementByXPath("/html/body/div[1]/section[2]/div[3]/div[1]/div/div[2]/div[6]/div[3]/div/div/div[3]/div/div/div[2]/div[2]/button") 
@@ -148,10 +167,11 @@ do{
 #send push
         }else{
             Write-Host "not in stock"  -ForegroundColor Red
+            Send-ProwlNotification -Subject "$NoOfSlots Halfords Bike not Found" -Message "Urgent Alert" -Priority 2 -ApiKeys $prowl_apikey
     }
 
     $ChromeDriver.Close()
     $ChromeDriver.Quit()
-    Start-Sleep -mins $interval
+    Start-Sleep -Seconds ($interval_mins * 60)
 
-} while ($inStock -eq $false)
+} while ($inStock -eq $null)
