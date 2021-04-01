@@ -1,3 +1,4 @@
+Install-Module Selenium
 #actual url
 $url='https://www.halfords.com/bikes/electric-bikes/voodoo-bizango-e-shimano-electric-mountain-bike---17in-19in-21in-frames-180982.html'
 #test url - testing in stock stuff
